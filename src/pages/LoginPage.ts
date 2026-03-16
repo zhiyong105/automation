@@ -2,25 +2,32 @@ import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class LoginPage extends BasePage {
-  // TODO: Cập nhật selectors phù hợp với ứng dụng PIM của bạn
+  // App uses 2-step login: enter username → Sign In → enter password → Sign In
   readonly usernameInput: Locator;
   readonly passwordInput: Locator;
-  readonly loginButton: Locator;
+  readonly signInButton: Locator;
   readonly errorMessage: Locator;
 
   constructor(page: Page) {
     super(page);
-    // TODO: Thay đổi selectors bên dưới cho đúng với app
-    this.usernameInput = page.locator('[name="username"], [id="username"], input[type="text"]').first();
-    this.passwordInput = page.locator('[name="password"], [id="password"], input[type="password"]').first();
-    this.loginButton = page.locator('button[type="submit"], [id="login-btn"], text=Login').first();
-    this.errorMessage = page.locator('.error-message, .alert-danger, [role="alert"]').first();
+    this.usernameInput = page.getByRole('textbox', { name: 'Username or email' });
+    this.passwordInput = page.getByRole('textbox', { name: 'Password' });
+    this.signInButton = page.getByRole('button', { name: 'Sign In' });
+    this.errorMessage = page.getByText(/Invalid/i);
+  }
+
+  // Step 1 only: enter username and click Sign In (used to test username validation)
+  async submitUsername(username: string) {
+    await this.usernameInput.fill(username);
+    await this.signInButton.click();
   }
 
   async login(username: string, password: string) {
-    await this.usernameInput.fill(username);
+    // Step 1: enter username, click Sign In
+    await this.submitUsername(username);
+    // Step 2: enter password, click Sign In
     await this.passwordInput.fill(password);
-    await this.loginButton.click();
+    await this.signInButton.click();
     await this.waitForPageLoad();
   }
 
@@ -31,8 +38,7 @@ export class LoginPage extends BasePage {
   }
 
   async expectLoginSuccess() {
-    // TODO: Cập nhật assertion phù hợp sau khi login thành công
-    await expect(this.page).not.toHaveURL(/.*login.*/);
+    await expect(this.page).toHaveURL(/.*dashboard.*/);
   }
 
   async expectLoginFailure() {
