@@ -1,0 +1,18 @@
+{
+  "name": "pim-automation",
+  "version": "1.0.0",
+  "description": "Playwright automation tests for PIM web app",
+  "scripts": {
+    "test:test": "ENV=test playwright test",
+    "test:stag": "ENV=stag playwright test",
+    "test:prod": "ENV=prod playwright test",
+    "test:all": "npm run test:test && npm run test:stag && npm run test:prod",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "@types/node": "^20.0.0",
+    "dotenv": "^16.4.5",
+    "typescript": "^5.4.0"
+  }
+}

@@ -1,0 +1,110 @@
+name: Playwright Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run tests'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - stag
+          - prod
+          - all
+
+jobs:
+  test-env:
+    name: Tests - TEST Environment
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'test' || github.event.inputs.environment == 'all'
+    environment: test
+    env:
+      ENV: test
+      BASE_URL: ${{ secrets.TEST_BASE_URL }}
+      USERNAME: ${{ secrets.TEST_USERNAME }}
+      PASSWORD: ${{ secrets.TEST_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run Playwright tests
+        run: npm run test:test
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-test
+          path: playwright-report/test/
+          retention-days: 30
+
+  test-stag:
+    name: Tests - STAGING Environment
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'stag' || github.event.inputs.environment == 'all'
+    environment: stag
+    env:
+      ENV: stag
+      BASE_URL: ${{ secrets.STAG_BASE_URL }}
+      USERNAME: ${{ secrets.STAG_USERNAME }}
+      PASSWORD: ${{ secrets.STAG_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run Playwright tests
+        run: npm run test:stag
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-stag
+          path: playwright-report/stag/
+          retention-days: 30
+
+  test-prod:
+    name: Tests - PRODUCTION Environment
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'prod' || github.event.inputs.environment == 'all'
+    environment: prod
+    env:
+      ENV: prod
+      BASE_URL: ${{ secrets.PROD_BASE_URL }}
+      USERNAME: ${{ secrets.PROD_USERNAME }}
+      PASSWORD: ${{ secrets.PROD_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run Playwright tests
+        run: npm run test:prod
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-prod
+          path: playwright-report/prod/
+          retention-days: 30
